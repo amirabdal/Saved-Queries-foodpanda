@@ -1,0 +1,23 @@
+SELECT *
+FROM (
+  SELECT
+    r.created_date_localtime,
+    r.order_id,
+    b.gfv_gross_local,
+    r.refund_value_local,
+    c.local_contact_reason,
+    ((r.refund_value_local) / b.gfv_gross_local) * 100 AS refund_percentage
+  FROM
+    `fulfillment-dwh-production.curated_data_shared.all_contacts` c
+
+  Left JOIN
+    `fulfillment-dwh-production.curated_data_shared.comp_and_refund_events` r ON c.order_id = r.order_id
+  Left JOIN
+   `fulfillment-dwh-production.pandata_report.country_BD_bd_analytics` b
+     ON r.order_id = b.order_code
+  WHERE
+    c.local_contact_reason IN ('Wrong topping', 'wrong-topping', 'Missing topping', 'missing-topping')
+    AND r.created_date_localtime BETWEEN '2023-10-01' AND '2023-12-31'
+) AS subquery
+WHERE
+  refund_percentage BETWEEN 32 AND 33;
