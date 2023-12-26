@@ -1,0 +1,11 @@
+select c.pandacare_ticket_id,c.response_date_local,c.ccr3,c.csat_score,x.exploit_status from `fulfillment-dwh-production.pandata_report.regional_apac_cx_ac_csat_responses` c 
+join 
+`fulfillment-dwh-production.curated_data_shared.exploit_claim_intents_new` x 
+on c.pd_order_code=x.order_id
+where c.global_entity_id='FP_BD' and c.response_date_local between '2023-11-01' and '2023-12-31';
+
+select c.pandacare_ticket_id,c.response_date_local,c.ccr3,c.csat_score,x.exploit_status from `fulfillment-dwh-production.pandata_report.regional_apac_cx_ac_csat_responses` c 
+join 
+`fulfillment-dwh-production.curated_data_shared.exploit_claim_intents_new` x 
+on c.pd_order_code=x.order_id
+where c.global_entity_id='FP_SG' and c.response_date_local between '2023-11-01' and '2023-12-31';
