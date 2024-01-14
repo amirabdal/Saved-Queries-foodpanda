@@ -1,0 +1,33 @@
+WITH bd AS (
+  SELECT distinct(order_code) as order_code,gmv_gross_local,status_code from `fulfillment-dwh-production.pandata_report.country_BD_bd_analytics` where order_date between '2023-10-01' and  '2023-12-31' and order_code is not null and is_gross_order
+),
+incidents AS(
+  SELECT distinct(order_id) as order_code from `fulfillment-dwh-production.curated_data_shared.all_contacts` where global_entity_id='FP_BD' and created_date between '2023-10-01' and  '2023-12-31' and order_id is not null and stakeholder='Customer'
+),
+Order_codes AS(
+  SELECT i.order_code, b.gmv_gross_local,b.status_code from bd b join  incidents i on b.order_code=i.order_code
+)
+  SELECT 
+   FORMAT_DATE('%B', r.created_date) AS month,
+  o.order_code,
+  o.status_code,
+  r.vertical,
+  r.refund_value_local,
+  o.gmv_gross_local,
+  ROUND(SAFE_DIVIDE(r.refund_value_local, o.gmv_gross_local),4)
+  from 
+  Order_codes o join `fulfillment-dwh-production.curated_data_shared.comp_and_refund_events` r 
+  on o.order_code= r.order_id where r.created_date between '2023-10-01' and  '2023-12-31' and r.global_entity_id='FP_BD' and r.refund_value_local>0;
+
+SELECT
+  FORMAT_DATE('%B', order_date) AS month,
+  COUNT(DISTINCT order_code) AS total_orders,
+FROM
+  `fulfillment-dwh-production.pandata_report.country_BD_bd_analytics`
+WHERE
+  order_date BETWEEN '2023-10-01' AND '2023-12-31'
+  AND order_code IS NOT NULL
+  AND is_gross_order
+GROUP BY
+  month
+
