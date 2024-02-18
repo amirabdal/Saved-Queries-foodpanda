@@ -1,0 +1,15 @@
+WITH valid_orders AS(
+  SELECT DISTINCT 
+    format_date("%B",order_date) as month,
+    COUNT(DISTINCT order_code) as total_orders,
+    SUM(total_value_local) as total_gmv
+  FROM `fulfillment-dwh-production.pandata_report.country_BD_bd_analytics` bd
+  WHERE (status_code in (621,612,68) OR decline_reason_title like "%Customer never received the order%") and order_date between '2023-11-01' and '2024-01-31' 
+  GROUP BY month
+),
+refund as( 
+select distinct format_date("%B",order_date) as month,sum(total_refund_comp_amount) as amount from `fulfillment-dwh-production.pandata_report.country_BD_fraud_refunds` where order_date between '2023-11-01' and '2024-01-31' and  vertical_type in ('supermarket','health_and_wellness','electronics','convenience','Fruits & Vegetables','Minimarket','Butchery','beauty','Fishery','pets','mother_and_baby','stationery_and_books','flowers') and is_pdc_refunded_or_compensated and is_pdc_refunded and is_reactive_comp and is_compensated
+group by month
+
+)
+select b.month,round(safe_divide(r.amount,b.total_orders),2) as cpo from valid_orders b join refund r on b.month=r.month
