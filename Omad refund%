@@ -1,0 +1,12 @@
+with base as (
+   select distinct format_date("%V",created_date) as week ,order_id,contact_reason_l3 from `fulfillment-dwh-production.curated_data_shared.all_contacts` where global_entity_id='FP_BD'and created_date>=current_date()-60 and stakeholder='Customer'
+and  contact_reason_l3 in (CONCAT('Order marked as delivered but didn', "'", 't receive'))
+),
+pay as (
+select format_date("%V", order_date) as week,bd.order_code,b.contact_reason_l3,
+case when payment_type_title in ('Online Payment', 'bKash', 'SSLCOMMERZ Standalone Payment Methods', 'SSLCOMMERZ Online Payment Methods') then "OP"
+when payment_type_title='Cash On Delivery'then "COD"
+END as payment_type_title
+from base b join `fulfillment-dwh-production.pandata_report.country_BD_bd_analytics` bd on b.order_id= bd.order_code where order_date >= current_date()-60 and is_gross_order and payment_type_title in ('Online Payment', 'bKash', 'SSLCOMMERZ Standalone Payment Methods', 'SSLCOMMERZ Online Payment Methods','Cash On Delivery')
+)
+select format_date("%V",r.order_date_local) as week,r.order_code,p.payment_type_title,p.contact_reason_l3 from pay p join `fulfillment-dwh-production.pandata_report.regional_apac_cx_all_refunds` r on p.order_code= r.order_code where r.global_entity_id='FP_BD' and p.payment_type_title="OP" and r. refund_amount_local >0
